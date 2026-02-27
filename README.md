@@ -61,8 +61,9 @@ CNN-for-Rock-Paper-Scissors-Classification/
 ### 1. BaselineNet
 Lightweight architecture with 2 convolutional layers:
 - 2 convolutional layers (3→8→4 channels)
-- 2 fully connected layers
+- Max pooling after each convolution
 - Tanh activation
+- 2 fully connected layers
 
 ### 2. DeepNet
 Deeper architecture with 3 convolutional layers:
