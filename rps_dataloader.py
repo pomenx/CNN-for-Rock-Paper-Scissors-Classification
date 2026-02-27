@@ -71,9 +71,9 @@ class RPS_Dataloader:
     def __init__(self, 
                  data_dir='../data',
                  batch_size=32, 
-                 img_size=(128, 128),
-                 normalize_mean=(0.5, 0.5, 0.5),
-                 normalize_std=(0.5, 0.5, 0.5),
+                 img_size=(200, 300),
+                #  normalize_mean=(0.5, 0.5, 0.5),
+                #  normalize_std=(0.5, 0.5, 0.5),
                  num_workers=0):
         """
         Initialize the RPS_Dataloader.
@@ -88,13 +88,13 @@ class RPS_Dataloader:
         """
         self.batch_size = batch_size
         self.img_size = img_size
-        self.normalize_mean = normalize_mean
-        self.normalize_std = normalize_std
+        # self.normalize_mean = normalize_mean
+        # self.normalize_std = normalize_std
         self.data_dir = data_dir
         self.num_workers = num_workers
         
         # Create transforms
-        self.transform = self._create_transform()
+        # self.transform = self._create_transform()
         
         # Load datasets
         self.train_dataset = None
@@ -106,19 +106,19 @@ class RPS_Dataloader:
         
         self._load_datasets()
     
-    def _create_transform(self):
-        """
-        Create image transformation pipeline.
+    # def _create_transform(self):
+    #     """
+    #     Create image transformation pipeline.
         
-        Returns:
-            transforms.Compose: Composition of transformations
-        """
-        transform = transforms.Compose([
-            transforms.Resize(self.img_size),
-            transforms.ToTensor(),
-            transforms.Normalize(self.normalize_mean, self.normalize_std)
-        ])
-        return transform
+    #     Returns:
+    #         transforms.Compose: Composition of transformations
+    #     """
+    #     transform = transforms.Compose([
+    #         transforms.Resize(self.img_size),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize(self.normalize_mean, self.normalize_std)
+    #     ])
+    #     return transform
     
     def _load_datasets(self):
         """
@@ -304,9 +304,9 @@ class RPSDataLoaderAugmented:
     def __init__(self, 
                  data_dir='../data',
                  batch_size=32, 
-                 img_size=(128, 128),
-                 normalize_mean=(0.5, 0.5, 0.5),
-                 normalize_std=(0.5, 0.5, 0.5),
+                 img_size=(300, 200),
+                #  normalize_mean=(0.5, 0.5, 0.5),
+                #  normalize_std=(0.5, 0.5, 0.5),
                  num_workers=0):
         """
         Initialize the RPS_Dataloader.
@@ -321,8 +321,8 @@ class RPSDataLoaderAugmented:
         """
         self.batch_size = batch_size
         self.img_size = img_size
-        self.normalize_mean = normalize_mean
-        self.normalize_std = normalize_std
+        # self.normalize_mean = normalize_mean
+        # self.normalize_std = normalize_std
         self.data_dir = data_dir
         self.num_workers = num_workers
         
@@ -575,21 +575,6 @@ class RPSDataLoaderGreenAugmented:
     
     def _load_datasets(self, calc_normalization_stats=False):
         try:
-            # # 1. Trasformazione base per calcolare le statistiche sul Train
-            # # Usiamo solo Resize e ToTensor per avere dati puliti
-            # base_transform = transforms.Compose([
-            #     transforms.Resize(self.img_size), # Adatta alla dimensione desiderata
-            #     transforms.ToTensor()
-            # ])
-            
-            # temp_train = datasets.ImageFolder(root=f'{self.data_dir}/train', transform=base_transform)
-
-            # imgs = torch.stack([img_t for img_t ,_ in temp_train], dim = 3)
-
-            # print(f"✓ Base dataset loaded for statistics calculation: {imgs.shape} samples")
-            
-            # mean = imgs.view(3, -1).mean(dim = 1)  # Calcola la media su tutti i canali e le immagini
-            # std = imgs.view(3, -1).std(dim = 1)     # Calcola la deviazione standard su tutti i canali e le immagini
             if calc_normalization_stats:
                 self.normalize_mean, self.normalize_std = self._calculate_dynamic_stats()
                 print(f"✓ Dynamic normalization stats: mean={self.normalize_mean}, std={self.normalize_std}")
@@ -597,14 +582,12 @@ class RPSDataLoaderGreenAugmented:
             self.train_transform = transforms.Compose([
                 transforms.Resize(self.img_size),
                 transforms.ToTensor(),
-                # transforms.Normalize(mean=self.normalize_mean, std=self.normalize_std)     # Normalizzazione
             ])
 
             # 3. TRASFORMAZIONI PER IL TEST (Senza Augmentation)
             self.test_transform = transforms.Compose([
                 transforms.Resize(self.img_size),
                 transforms.ToTensor(),
-                # transforms.Normalize(mean=self.normalize_mean, std=self.normalize_std)     # STESSA media/std del train
             ])
 
             # 4. Caricamento finale
@@ -614,7 +597,7 @@ class RPSDataLoaderGreenAugmented:
             self.test_dataset = datasets.ImageFolder(
                 root=f'{self.data_dir}/test', transform=self.test_transform)
 
-            print(f"✓ Datasets loaded with Data Augmentation")
+            print(f"✓ Datasets loaded with Green Augmentation")
 
         except Exception as e:
             print(f"✗ Error: {e}")
@@ -661,15 +644,6 @@ class RPSDataLoaderGreenAugmented:
 
         return images_aug
     
-    # def augmented_train_loader(self):
-    #     """Generatore che restituisce batch già aumentati"""
-    #     if self.train_loader is None:
-    #         self._create_loaders()
-    #     for images, labels in self.train_loader:
-    #         # Applica l'augmentation al volo
-    #         aug_images = self.apply_green_aug(images)
-    #         yield aug_images, labels
-
     def augmented_train_loader(self):
         """Restituisce un oggetto iterabile che si comporta come un loader classico"""
         if self.train_loader is None:

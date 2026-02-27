@@ -1,0 +1,8 @@
+torch
+torchvision
+numpy
+matplotlib
+seaborn
+scikit-learn
+Pillow
+chromakey @ git+https://github.com/eugeneteoh/chromakey.git@4c138763f45bd56a4824ad3720b65162f5afbc0d

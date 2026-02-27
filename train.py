@@ -1,6 +1,6 @@
 import datetime
 import torch
-from CNN2 import Net , NetDropout , DeepNet , ResBlock
+from CNN import Net , NetDropout , DeepNet 
 from rps_dataloader import  RPSDataLoaderAugmented , RPSDataLoaderGreenAugmented , RPS_Dataloader
 from torch import optim
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, precision_recall_fscore_support
@@ -8,6 +8,8 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import ParameterGrid, KFold
+import numpy as np
 
 device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 
@@ -209,8 +211,6 @@ def evaluate_model(model, test_loader, device, class_names):
 
 
 def grid_search_with_K_fold(model_class, param_grid, train_dataset, k=5 , log_file=None, model_name=None):
-    from sklearn.model_selection import ParameterGrid, KFold
-    import numpy as np
 
     best_params = None
     best_score = 0.0
@@ -301,13 +301,93 @@ def test_model_best_params(model_class, best_params, train_dataset, test_loader,
     return metrics
 
 def main():
+    models = [(Net, "Net"), (DeepNet, "DeepNet"), (NetDropout, "NetDropout")]
+
+    # Normalized dataset
+
+    data_loader = RPS_Dataloader(
+        data_dir='../dataset',  # Update this path to your dataset
+        img_size=(200, 300),)
+
+    best_params = {}
+    test_values = {}
+
+    for model_class, model_name in models:
+
+        print(f"Testing model: {model_name}")
+
+        best_params[model_name] = grid_search_with_K_fold(
+            model_class=model_class,
+            param_grid={
+                'n_epoch': [10, 30, 50],
+                'learning_rate': [0.01, 0.001, 0.0001],
+                'batch_size': [32, 64, 128],
+                'optimizer': [optim.Adam, optim.SGD]
+            },
+            train_dataset=data_loader.train_dataset,
+            k=3,
+            log_file=f'{model_name}_Normalized_grid_search_log.txt',
+            model_name=model_name
+        )
+        print(f"Best parameters for {model_name}: {best_params[model_name]}")
+        test_values[model_name] = test_model_best_params(
+            model_class=model_class,
+            best_params=best_params[model_name],
+            train_dataset=data_loader.train_dataset,
+            test_loader=data_loader.get_test_loader(),
+            log_file=f'{model_name}_Normalized_test_log.txt',
+            model_name=model_name,
+            dataset_name="Normalized"
+        )
+        print(f"Test results for {model_name}: {test_values[model_name]}")
+    
+    print(f"Best parameters for all models: {best_params}")
+    print(f"Test results for all models: {test_values}")
+
+    # Data augmentation dataset
 
     data_loader = RPSDataLoaderAugmented(
         data_dir='../dataset',  # Update this path to your dataset
         img_size=(200, 300),)
 
-    # model = Net()
-    models = [(NetDropout, "NetDropout")]
+    best_params = {}
+    test_values = {}
+    for model_class, model_name in models:
+        print(f"Testing model: {model_name}")
+        best_params[model_name] = grid_search_with_K_fold(
+            model_class=model_class,
+            param_grid={
+                'n_epoch': [10, 30, 50],
+                'learning_rate': [0.01, 0.001, 0.0001],
+                'batch_size': [32, 64, 128],
+                'optimizer': [optim.Adam, optim.SGD]
+            },
+            train_dataset=data_loader.train_dataset,
+            k=3,
+            log_file=f'{model_name}_GreenAug_grid_search_log.txt',
+            model_name=model_name
+        )
+        print(f"Best parameters for {model_name}: {best_params[model_name]}")
+        test_values[model_name] = test_model_best_params(
+            model_class=model_class,
+            best_params=best_params[model_name],
+            train_dataset=data_loader.train_dataset,
+            test_loader=data_loader.get_test_loader(),
+            log_file=f'{model_name}_GreenAugmented_test_log.txt',
+            model_name=model_name,
+            dataset_name="GreenAugmented"
+        )
+        print(f"Test results for {model_name}: {test_values[model_name]}")
+    
+    print(f"Best parameters for all models: {best_params}")
+    print(f"Test results for all models: {test_values}")
+
+    # Green augmented dataset
+
+    data_loader = RPSDataLoaderGreenAugmented(
+        data_dir='../dataset',  # Update this path to your dataset
+        img_size=(200, 300),)
+
     best_params = {}
     test_values = {}
     for model_class, model_name in models:
@@ -339,22 +419,5 @@ def main():
     
     print(f"Best parameters for all models: {best_params}")
     print(f"Test results for all models: {test_values}")
-    # model = DeepNet()
-    # model = ResBlock()
-    # model().to(device)
-    # # optimizer = optim.SGD(model.parameters(), lr=0.001, weight_decay=0.001)
-    # optimizer = optim.Adam(model.parameters(), lr=0.001)
-    # loss_fn = torch.nn.CrossEntropyLoss()
-    # print(f"Training on device {device}.")
-    # training_loop(
-    #     n_epochs=50,
-    #     optimizer=optimizer,
-    #     model=model,
-    #     loss_fn=loss_fn,
-    #     train_loader=train_loader
-    # )
-
-    # validate(model, train_loader, val_loader)
-    # validate(model, train_loader, test_loader)
 
 main()
